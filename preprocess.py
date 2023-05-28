@@ -27,7 +27,7 @@ def get_parser():
 def create_molfile(mol: Chem.Mol, node_id: str, output_dir: str)->None:
     _mol = copy.deepcopy(mol)
     AllChem.EmbedMolecule(_mol)
-    output_path = f"{output_dir}/{node_id}.mol"
+    output_path = f"{output_dir}/{node_id}.txt"  # because .mol is not supported in TextAsset
     Chem.MolToMolFile(_mol, output_path)
     
 
@@ -37,8 +37,8 @@ def draw_2dmol(mol: Chem.Mol, node_id: str, output_dir: str) -> None:
 
     draw_opts = rdMolDraw2D.MolDrawOptions()
     draw_opts.clearBackground = False
-    draw_opts.fixedFontSize = 40
-    draw_opts.bondLineWidth = 6
+    draw_opts.fixedFontSize = 60
+    draw_opts.bondLineWidth = 3
 
     drawer = rdMolDraw2D.MolDraw2DCairo(500, 500)
     drawer.SetDrawOptions(draw_opts)
