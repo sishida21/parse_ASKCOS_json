@@ -1,5 +1,6 @@
 import argparse
 import copy
+import glob
 import json
 import os
 
@@ -21,6 +22,10 @@ def get_parser():
         "-d", "--debug", action='store_true',
         help="debug mode"
     )
+    parser.add_argument(
+        "--delete", action='store_true',
+        help="delete png and txt(mol) files related to the json file"
+    )
     return parser.parse_args()
 
 
@@ -36,8 +41,8 @@ def draw_2dmol(mol: Chem.Mol, node_id: str, output_dir: str) -> None:
     AllChem.Compute2DCoords(_mol)
 
     draw_opts = rdMolDraw2D.MolDrawOptions()
-    draw_opts.clearBackground = False
-    draw_opts.fixedFontSize = 60
+    draw_opts.clearBackground = True
+    draw_opts.fixedFontSize = 55
     draw_opts.bondLineWidth = 3
 
     drawer = rdMolDraw2D.MolDraw2DCairo(500, 500)
@@ -48,6 +53,13 @@ def draw_2dmol(mol: Chem.Mol, node_id: str, output_dir: str) -> None:
     output_path = f"{output_dir}/{node_id}.png"
     with open(output_path, 'wb') as f:
         f.write(drawer.GetDrawingText())
+
+
+def delete_all_files(directory: str) -> None:
+    files = glob.glob(f"{directory}/*")
+    for f in files:
+        if os.path.isfile(f):
+            os.remove(f)
 
 
 def main():
@@ -62,6 +74,14 @@ def main():
     output_parentdir = os.path.dirname(path_json)
     output_molfile_dir = os.path.join(output_parentdir, "molfiles")
     output_img_dir = os.path.join(output_parentdir, "images")
+
+    if args.delete:
+        print(f"Mol files were deleted: {output_molfile_dir}")
+        delete_all_files(output_molfile_dir)
+        print(f"PNG files were deleted: {output_img_dir}")
+        delete_all_files(output_img_dir)
+        return
+        
 
     for node in data['dispGraph']['nodes']:
         if node['type'] == 'reaction':
