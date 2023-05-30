@@ -5,7 +5,7 @@ import json
 import os
 
 from rdkit import Chem, RDLogger
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, Draw
 from rdkit.Chem.Draw import rdMolDraw2D
 
 
@@ -55,6 +55,24 @@ def draw_2dmol(mol: Chem.Mol, node_id: str, output_dir: str) -> None:
         f.write(drawer.GetDrawingText())
 
 
+def draw_rxn_image(rxn_smiles: str, rxn_id: str, output_dir: str) -> None:
+    rxn = AllChem.ReactionFromSmarts(rxn_smiles, useSmiles=True)
+    
+    draw_opts = rdMolDraw2D.MolDrawOptions()
+    draw_opts.clearBackground = True
+    draw_opts.fixedFontSize = 30
+    draw_opts.bondLineWidth = 2.5
+    
+    drawer = rdMolDraw2D.MolDraw2DCairo(600, 300)
+    drawer.SetDrawOptions(draw_opts)
+    drawer.DrawReaction(rxn)
+    drawer.FinishDrawing()
+
+    output_path = f"{output_dir}/{rxn_id}.png"
+    with open(output_path, 'wb') as f:
+        f.write(drawer.GetDrawingText())
+
+
 def delete_all_files(directory: str) -> None:
     files = glob.glob(f"{directory}/*")
     for f in files:
@@ -81,14 +99,14 @@ def main():
         print(f"PNG files were deleted: {output_img_dir}")
         delete_all_files(output_img_dir)
         return
-        
 
     for node in data['dispGraph']['nodes']:
         if node['type'] == 'reaction':
-            continue
-        mol = Chem.MolFromSmiles(node['smiles'])
-        create_molfile(mol, node['id'], output_molfile_dir)
-        draw_2dmol(mol, node['id'], output_img_dir)
+            draw_rxn_image(node['smiles'], node['id'], output_img_dir)
+        else:  # 'chemical'
+            mol = Chem.MolFromSmiles(node['smiles'])
+            create_molfile(mol, node['id'], output_molfile_dir)
+            draw_2dmol(mol, node['id'], output_img_dir)
     
     print(f"Mol files were saved in {output_molfile_dir}")
     print(f"PNG files were saved in {output_img_dir}")
